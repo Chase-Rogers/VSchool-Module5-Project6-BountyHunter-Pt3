@@ -66,45 +66,58 @@ const bounties = [
 bountiesRouter
     .route("/")
     .get((req, res) => {
-        res.send(bounties);
+        res.status(200).send(bounties);
     })
     .post((req, res) => {
         const newBounty = req.body;
         newBounty._id = uuidv4();
         bounties.push(newBounty);
-        res.send(newBounty);
+        res.status(201).send(newBounty);
     });
 
 // Get one
-bountiesRouter.get("/:bountyId", (req, res) => {
+bountiesRouter.get("/:bountyId", (req, res, next) => {
     const bountyId = req.params.bountyId;
-    const foundBounty = bounties.find((bounty) => {
-        return bounty._id === bountyId;
-    });
-    res.send(foundBounty);
+    const foundBounty = bounties.find((bounty) => bounty._id === bountyId)
+    if(!foundBounty) {
+        const error = new Error(`The item with id ${bountyId} found.`)
+        res.status(500)
+        return next(error)
+    };
+    res.status(200).send(foundBounty);
 });
 
 // Get by type
-bountiesRouter.get("/search/type", (req, res) => {
+bountiesRouter.get("/search/type", (req, res, next) => {
     const type = req.query.type;
     const filteredBounties = bounties.filter((bounty) => bounty.type === type);
-    res.send(filteredBounties);
+    if(!filteredBounties) {
+        const error = new Error(`The bounty with type ${type} was not found`)
+        res.status(500)
+        return next(error)
+    }
+    res.status(200).send(filteredBounties);
 });
 
 //Delete one
-bountiesRouter.delete("/:bountyId", (req, res) => {
+bountiesRouter.delete("/:bountyId", (req, res, next) => {
     const bountyId = req.params.bountyId;
     const bountyIndex = bounties.findIndex((bounty) => bounty._id === bountyId);
     bounties.splice(bountyIndex, 1);
-    res.send("bounty removed");
+    res.status(201).send("bounty removed");
 });
 
 //Update one
-bountiesRouter.put("/:bountyId", (req, res) => {
+bountiesRouter.put("/:bountyId", (req, res, next) => {
     const bountyId = req.params.bountyId;
     const bountyIndex = bounties.findIndex((bounty) => bounty._id === bountyId);
     const updatedBounty = Object.assign(bounties[bountyIndex], req.body);
-    res.send(updatedBounty);
+    if(!updatedBounty) {
+        const error = new Error(`something went wrong`)
+        res.status(500)
+        return next(error)
+    }
+    res.status(201).send(updatedBounty);
 });
 
 module.exports = bountiesRouter;
